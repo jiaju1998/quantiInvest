@@ -206,17 +206,18 @@ class stg():
             if list_[i][2] >= 5:
                 winRateList.append(tmp)
         winRateList.sort(key=lambda ele: ele[4], reverse=True)
-        return sum0, sum1, winRateList, numCount
+        top20WinRateList = winRateList[0:20]
+        return sum0, sum1, top20WinRateList, numCount
 
 
     def stg2(self, timeP):                     # 3天内成交量和涨幅top10的股票，在后面两天挣钱的概率
+        stockNum = 0
         dashBoard = []
         totalNum = 0                        #进入到策略的总数
         winNum = 0                          #进入到策略且成功上涨的总数
         realTimeP = self.timePeriodCheck(timeP)
         totalList = []
-        #for idx in range(len(self.stockBase)):
-        for idx in range(10):
+        for idx in range(len(self.stockBase)):
             curStock = self.stockBase[idx]
             curStockCode = curStock[1]
             curStockName = curStock[2]
@@ -248,6 +249,7 @@ class stg():
                 list1Tmp.append(targetList[i][2])
                 list0Tmp.append(list1Tmp)
             totalList.append(list0Tmp)
+            stockNum = stockNum + 1
         testPeriod = 3
         validPeriod = 2
         for day in range(realTimeP - testPeriod - validPeriod):
@@ -271,9 +273,9 @@ class stg():
             rateMarkList = self.getRateList(rateList)
             turnOverMarkList = self.getTOList(turnOverList)
             #设置系数
-            rateCoe = 0.5
-            TOCoe = 0.5
-            markThreshold = 60
+            TOCoe = 0.5                                           #重要参数，写到接口里去
+            rateCoe = 0.5                                        #重要参数，写到接口里去
+            markThreshold = 80                                  #重要参数，写到接口里去
             markList = self.getFinalMarkList(rateMarkList, rateCoe, turnOverMarkList, TOCoe)
             markList.sort(key=lambda ele: ele[2], reverse=True)
             #把分数高于阈值的股票挑出来
@@ -293,10 +295,10 @@ class stg():
                         if (twoDaysRate >= 10000):
                             num1 = num1 + 1
                         break
-            print("procDateIdx:" + str(day) + '    ' + '进入策略的股票数:' + str(num0) + '   进入策略且上涨的股票数:' + str(num1))
+            print("procDateIdx:" + str(day) + '    ' + '分数阈值：' + str(markThreshold) + '   ' + '进入策略的股票数:' + str(num0) + '   进入策略且上涨的股票数:' + str(num1))
             totalNum = totalNum + num0
             winNum = winNum + num1
 
-        return totalNum, winNum
+        return totalNum, winNum, stockNum
 
 
