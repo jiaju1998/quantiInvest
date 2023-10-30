@@ -211,6 +211,11 @@ class stg():
 
 
     def stg2(self, timeP):                     # 3天内成交量和涨幅top10的股票，在后面两天挣钱的概率
+        # 设置系数
+        TOCoe = 0.5  # 重要参数，写到接口里去
+        rateCoe = 0.5  # 重要参数，写到接口里去
+        markThreshold = 80  # 重要参数，写到接口里去
+
         stockNum = 0
         dashBoard = []
         totalNum = 0                        #进入到策略的总数
@@ -272,10 +277,6 @@ class stg():
             #计算每只股票的分数
             rateMarkList = self.getRateList(rateList)
             turnOverMarkList = self.getTOList(turnOverList)
-            #设置系数
-            TOCoe = 0.5                                           #重要参数，写到接口里去
-            rateCoe = 0.5                                        #重要参数，写到接口里去
-            markThreshold = 80                                  #重要参数，写到接口里去
             markList = self.getFinalMarkList(rateMarkList, rateCoe, turnOverMarkList, TOCoe)
             markList.sort(key=lambda ele: ele[2], reverse=True)
             #把分数高于阈值的股票挑出来
@@ -299,6 +300,6 @@ class stg():
             totalNum = totalNum + num0
             winNum = winNum + num1
 
-        return totalNum, winNum, stockNum
+        return totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold
 
 
