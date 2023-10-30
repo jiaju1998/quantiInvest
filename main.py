@@ -84,6 +84,7 @@ if __name__ == '__main__':
         # stg2
         totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold = stg().stg2(timePeriod)
         logLine = 'report of stg2'
+        log = addLogLine(log, logLine)
         logLine = 'param--> TOcoeff: ' + str(TOCoe) + '  rateCoeff: ' + str(rateCoe) + '  threshold(max 100): ' + str(markThreshold)
         log = addLogLine(log, logLine)
         logLine = '统计的股票数 ' + str(stockNum)
