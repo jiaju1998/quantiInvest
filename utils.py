@@ -66,3 +66,4 @@ def getDateStr(timeBeforeDays):
     agoStr = daysAgo[:4] + daysAgo[5:7] + daysAgo[8:]
     daysAdayAgoStr = daysAdayAgo[:4] + daysAdayAgo[5:7] + daysAdayAgo[8:]
     return agoStr, nowStr
+

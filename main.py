@@ -22,6 +22,7 @@ from logPrinter import addLogLine
 #     while True:
 #         schedule.run_pending
 if __name__ == '__main__':
+
     print('start of main func!')
     stgIdx = sys.argv[1]
     timePeriod = int(sys.argv[2])
@@ -59,10 +60,12 @@ if __name__ == '__main__':
         log = ''
         logFileName = str(datetime.date.today()) + '.txt'
         logFilePath = 'dailyReport/' + logFileName
-        sum0, sum1, top20WinRateList, numCount = stg().stg1(timePeriod)
+        sum0, sum1, top20WinRateList, numCount, pickListTop20, pickCount = stg().stg1(timePeriod)
         log = addSeperate(log)
         #stg1
         logLine = 'report of stg1'
+        log = addLogLine(log, logLine)
+        logLine = '回测结果:'
         log = addLogLine(log, logLine)
         logLine = '统计的股票数 ' + str(numCount)
         log = addLogLine(log, logLine)
@@ -79,13 +82,24 @@ if __name__ == '__main__':
         for elem in top20WinRateList:
             logLine = str(elem)
             log = addLogLine(log, logLine)
+        logLine = '选股结果:'
+        log = addLogLine(log, logLine)
+        logLine = '今日进入策略的股票数： ' + str(pickCount)
+        log = addLogLine(log, logLine)
+        logLine= 'top20推荐股票:'
+        log = addLogLine(log, logLine)
+        for elem in pickListTop20:
+            logLine = str(elem)
+            log = addLogLine(log, logLine)
         log = addSeperate(log)
         log = addSeperate(log)
         # stg2
-        totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold = stg().stg2(timePeriod)
+        totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold, pickList, pickCount = stg().stg2(timePeriod)
         logLine = 'report of stg2'
         log = addLogLine(log, logLine)
         logLine = 'param--> TOcoeff: ' + str(TOCoe) + '  rateCoeff: ' + str(rateCoe) + '  threshold(max 100): ' + str(markThreshold)
+        log = addLogLine(log, logLine)
+        logLine = '回测结果:'
         log = addLogLine(log, logLine)
         logLine = '统计的股票数 ' + str(stockNum)
         log = addLogLine(log, logLine)
@@ -95,6 +109,15 @@ if __name__ == '__main__':
         log = addLogLine(log, logLine)
         logLine = '总成功率：' + str(winNum / totalNum)
         log = addLogLine(log, logLine)
+        logLine = '选股结果:'
+        log = addLogLine(log, logLine)
+        logLine = '入围股票数： ' + str(pickCount)
+        log = addLogLine(log, logLine)
+        logLine = 'top20推荐股票:'
+        log = addLogLine(log, logLine)
+        for elem in pickList:
+            logLine = str(elem)
+            log = addLogLine(log, logLine)
         log = addSeperate(log)
 
         with open(logFilePath, "w", encoding="utf-8") as file:
