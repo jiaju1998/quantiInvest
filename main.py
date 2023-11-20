@@ -12,6 +12,8 @@ import datetime
 from logPrinter import addSeperate
 from logPrinter import addLogLine
 
+
+
 # def runMyProc():
 #     msgSend().do()
 #
@@ -21,6 +23,9 @@ from logPrinter import addLogLine
 #     msgSend().do()
 #     while True:
 #         schedule.run_pending
+
+
+
 if __name__ == '__main__':
 
     print('start of main func!')
@@ -57,12 +62,13 @@ if __name__ == '__main__':
         else:
             print('no strategy support')
     elif mod == 0:
+
         log = ''
         logFileName = str(datetime.date.today()) + '.txt'
         logFilePath = 'dailyReport/' + logFileName
+        #stg1 --------------------------------------------
         sum0, sum1, top20WinRateList, numCount, pickListTop20, pickCount = stg().stg1(timePeriod)
         log = addSeperate(log)
-        #stg1
         logLine = 'report of stg1'
         log = addLogLine(log, logLine)
         logLine = '回测结果:'
@@ -93,7 +99,7 @@ if __name__ == '__main__':
             log = addLogLine(log, logLine)
         log = addSeperate(log)
         log = addSeperate(log)
-        # stg2
+        # stg2 --------------------------------------------
         totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold, pickList, pickCount = stg().stg2(timePeriod)
         logLine = 'report of stg2'
         log = addLogLine(log, logLine)
@@ -119,12 +125,41 @@ if __name__ == '__main__':
             logLine = str(elem)
             log = addLogLine(log, logLine)
         log = addSeperate(log)
+        log = addSeperate(log)
+        # stg3 --------------------------------------------
+        timeP_stg3, targetDay_stg3, stockCount, factInfo = stg().stg3()
+        logLine = 'report of stg3'
+        log = addLogLine(log, logLine)
+        logLine = '时间周期：' + str(timeP_stg3)
+        log = addLogLine(log, logLine)
+        logLine = 'targetDay（回测的跑赢周期）：' + str(targetDay_stg3)
+        log = addLogLine(log, logLine)
+        logLine = '总共统计股票数：' + str(stockCount)
+        log = addLogLine(log, logLine)
+        for elem in factInfo:
+            logLine = '[' + '有效因子： ' + str(elem[6]) + ']'
+            log = addLogLine(log, logLine)
+            logLine = '相关系数： ' + str(elem[0])
+            log = addLogLine(log, logLine)
+            logLine = '第一组的平均因子和第五组的平均因子： ' + str(elem[1])
+            log = addLogLine(log, logLine)
+            logLine = '第一组因子的范围： ' + str(elem[2])
+            log = addLogLine(log, logLine)
+            logLine = '第五组因子的范围： ' + str(elem[3])
+            log = addLogLine(log, logLine)
+            logLine = '在targetday后，第一组因子下跑赢的概率和第五组因子下跑赢的概率： ' + str(elem[4])
+            log = addLogLine(log, logLine)
+            logLine = '在targetday后，第一组和第五组因子下盈利中位数（单位%）： ' + str(elem[5])
+            log = addLogLine(log, logLine)
+        log = addSeperate(log)
+        log = addSeperate(log)
 
         with open(logFilePath, "w", encoding="utf-8") as file:
             file.write(log)
 
 
+
+
     print('end of main func')
 
 #end of main
-

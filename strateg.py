@@ -1,14 +1,18 @@
 import os
 import sys
 import numpy as np
+import pandas as pd
+
 from utils import readStockListAll
 from utils import getDateStr
-from utils import sp_elem, hs_elem, separatePrinter
+from utils import sp_elem, hs_elem, separatePrinter, hs_indic_elem
 import akshare as ak
 import datetime
 from utils import stockDic
 import time
 from collections import Counter
+from multiFactor import getMultFactorList
+import func_timeout
 
 '''
 1:返回最近n天 涨跌幅 前十 glob
@@ -71,13 +75,14 @@ class stg():
     def timePeriodCheck(self, timeP):
         print('start of time period check')
         dstList = []
-        for idx in range(30):                   #统计30只股票在timeP中的开盘日期，选出realTimeP
+        for idx in range(1000):                   #统计30只股票在timeP中的开盘日期，选出realTimeP
             curStock = self.stockBase[idx]
             curStockCode = curStock[1]
             curStockName = curStock[2]
             # 一次拿一百天的数据，避免重复访问
             startDate, endDate = getDateStr(timeP)
-
+            # startDate = '20231025'
+            # endDate = '20231115'
             flag = 1
             while flag == 1:
                 try:
@@ -131,6 +136,14 @@ class stg():
             markList[i][2] = tmp
 
         return markList
+
+    @func_timeout.func_set_timeout(10)
+    def getStockIndicator(self, stockCode):
+        hs = ak.stock_a_indicator_lg(symbol=stockCode)
+        targetList_indicator = hs[
+            [hs_indic_elem[0], hs_indic_elem[1], hs_indic_elem[2], hs_indic_elem[3], hs_indic_elem[4],
+             hs_indic_elem[5], hs_indic_elem[6], hs_indic_elem[7], hs_indic_elem[8]]].values
+        return targetList_indicator
 
     def stg1(self, timeP):                   #3天内成交量较为稳定且三天内收益为正的，在后面两天挣钱的概率
         #--------------------------------回测--------------------------------
@@ -220,8 +233,6 @@ class stg():
             curStockCode = curStock[1]
             curStockName = curStock[2]
 
-            if (2135 == idx):
-                debug = 1
 
             flag = 1
             while flag == 1:
@@ -419,4 +430,103 @@ class stg():
 
         return totalNum, winNum, stockNum, TOCoe, rateCoe, markThreshold, pickList, pickCount
 
+    def stg3(self):                #策略三，多因子选股
 
+        timeP = 100     #暂定100天
+        targetDay = 5   #暂定测试5天后的利率
+        realTimeP = self.timePeriodCheck(timeP)
+        MFactList = []  # [市盈率，市盈率ttm，市净率，市销率，市销率ttm，股息率，股息率ttm，总市值, 成交量， 成交额，振幅，换手率，换手率变动]
+        stockBase = readStockListAll()
+        startDate, endDate = getDateStr(timeP)
+        # startDate = '20231025'
+        # endDate = '20231115'
+        dayFlag = datetime.date.today() - datetime.timedelta(days=timeP)
+        # dayFlag = datetime.date(2023, 10, 25)
+        dataGround = []
+        stockCount = 0
+        for idx in range(len(stockBase)):
+        # for idx in range():
+
+            print('[stg3]processing:' + str(idx) + ' of ' + str(len(stockBase)))
+            curStock = stockBase[idx]
+            curStockCode = curStock[1]
+            curStockName = curStock[2]
+            # 使用stock_a_indicator_lg获取ep等因子信息
+
+            try:
+                targetList_indicator = self.getStockIndicator(curStockCode)
+            except:
+                print('something Wrong! continue!')
+                continue
+
+            targetList = []
+            for elem in targetList_indicator:
+                if elem[0] >= dayFlag:
+                    targetList.append(elem)
+            if realTimeP != len(targetList):
+                continue
+            pe, pe_ttm, pb, ps, ps_ttm, dv_ratio, dv_ttm, total_mv = [], [], [], [], [], [], [], []
+            for elem in targetList:
+                pe.append(elem[1])
+                pe_ttm.append(elem[2])
+                pb.append(elem[3])
+                ps.append(elem[4])
+                ps_ttm.append(elem[5])
+                dv_ratio.append(elem[6])
+                dv_ttm.append(elem[7])
+                total_mv.append(elem[8])
+
+            # 使用stock_zh_a_hist获取历史行情
+            flag = 1
+            while flag == 1:
+                try:
+                    hs = ak.stock_zh_a_hist(symbol=curStockCode, start_date=startDate, end_date=endDate)
+                    flag = 0
+                except:
+                    time.sleep(2)
+
+            try:
+                targetList = hs[[hs_elem[0], hs_elem[2], hs_elem[5], hs_elem[6], hs_elem[7], hs_elem[10]]].values
+            except KeyError:
+                print('[multiFactor][test] no info found of this stock!:' + str(curStockCode) + ':' + str(curStockName))
+                continue
+            if realTimeP != len(targetList):
+                continue
+            trans_A, trans_V, amplit, turnRate, turnRate_delta = [], [], [], [], []
+            price = []
+            turnRate_delta.append(1)
+            for elem in targetList:
+                trans_A.append(elem[2])
+                trans_V.append(elem[3])
+                amplit.append(elem[4])
+                turnRate.append(elem[5])
+                price.append(elem[1])
+            for idx in range(1, len(turnRate)):
+                turnRate_delta.append(turnRate[idx] / (turnRate[idx - 1] + 0.00000000001))
+
+            data_per_stock = [pe, pe_ttm, pb, ps, ps_ttm, dv_ratio, dv_ttm, total_mv, trans_A, trans_V, amplit, turnRate, turnRate_delta]
+            # 将回测周期数据减去预测时间
+            for idx in range(len(data_per_stock)):
+                data_per_stock[idx] = data_per_stock[idx][:(len(data_per_stock[idx]) - targetDay)]
+            profit = []   #target后的收益
+            for day in range(len(data_per_stock[0])):
+                profit.append((price[day+targetDay] - price[day]) / price[day])
+            data_per_stock.append(profit)
+
+
+
+            dataGround.append(data_per_stock)
+            stockCount = stockCount + 1
+        print('total stock num: ' + str(stockCount))
+        totalFactInfo = []
+        for i in range(13):       # 13个因子
+            curFactorInfo = getMultFactorList(dataGround, realTimeP - targetDay, i)
+            totalFactInfo.append(curFactorInfo)
+
+        corrThresh = 0.1    #相关系数阈值
+        affectFactInfo = [x for x in totalFactInfo if abs(x[0]) > corrThresh]
+        affectFactInfo = totalFactInfo   #test
+
+        return timeP, targetDay, stockCount, affectFactInfo
+
+        debug = 1
